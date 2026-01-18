@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>THB Clone – All-in-One Cyber Training Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+/* ================= GLOBAL STYLES ================= */
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #007bff, #dc3545);
+    color: #fff;
+}
+header {
+    background: rgba(0,0,0,0.6);
+    padding: 20px;
+    text-align: center;
+}
+nav {
+    background: #222;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+}
+nav a:hover { text-decoration: underline; }
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+.card {
+    background: rgba(0,0,0,0.45);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+button {
+    padding: 10px 20px;
+    border: none;
+    background: #28a745;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+}
+button:hover { opacity: 0.9; }
+input {
+    padding: 8px;
+    width: 100%;
+    margin: 5px 0 15px;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+.badge { font-size: 0.85em; opacity: 0.8; }
+.progress {
+    background: #444;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress span {
+    display: block;
+    height: 10px;
+    background: #28a745;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #555;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #111;
+    margin-top: 40px;
+}
+.warning {
+    background: #ffebee;
+    color: #000;
+    padding: 15px;
+    border-left: 5px solid red;
+    border-radius: 5px;
+}
+.safe {
+    background: #e8f5e9;
+    color: #000;
+    padding: 15px;
+    border-left: 5px solid #4caf50;
+    border-radius: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🛡️ THB Clone – TryHackBox</h1>
+    <p>All-in-One Educational Cyber Training Platform</p>
+</header>
+
+<nav id="nav"></nav>
+
+<div class="container" id="app"></div>
+
+<footer>
+    <p>© 2026 THB Clone | Educational Use Only | Inspired by THM & HTB</p>
+</footer>
+
+<script>
+/* ================= DATA ================= */
+const PATHS = [
+ {id:1,name:"Complete Beginner Path",desc:"Intro to cybersecurity",diff:"Easy",points:500},
+ {id:2,name:"Web Exploitation Path",desc:"SQLi, XSS labs",diff:"Medium",points:800},
+ {id:3,name:"Red Team Ops Path",desc:"Advanced attack sims",diff:"Hard",points:1200}
+];
+
+const CHALLENGES = [
+ {id:"box1",name:"VulnNet Box",points:20},
+ {id:"box2",name:"SQLi Challenge",points:50},
+ {id:"box4",name:"Reflected XSS Challenge",points:40}
+];
+
+/* ================= AUTH ================= */
+let users = JSON.parse(localStorage.getItem("thb_users")) || {};
+let currentUser = localStorage.getItem("thb_current");
+
+function save() {
+ localStorage.setItem("thb_users", JSON.stringify(users));
+ localStorage.setItem("thb_current", currentUser);
+}
+
+function nav() {
+ const n = document.getElementById("nav");
+ if(currentUser){
+   n.innerHTML = `
+   <a href="#" onclick="dashboard()">Dashboard</a>
+   <a href="#" onclick="leaderboard()">Leaderboard</a>
+   <a href="#" onclick="logout()">Logout (${currentUser})</a>`;
+ } else {
+   n.innerHTML = `
+   <a href="#" onclick="login()">Login</a>
+   <a href="#" onclick="register()">Register</a>`;
+ }
+}
+
+/* ================= SCREENS ================= */
+function login(){
+ document.getElementById("app").innerHTML = `
+ <div class="card">
+ <h2>Login</h2>
+ <input id="email" placeholder="Email">
+ <input id="pass" type="password" placeholder="Password">
+ <button onclick="doLogin()">Login</button>
+ </div>`;
+}
+
+function doLogin(){
+ let e=email.value,p=pass.value;
+ if(users[e] && users[e].pass===p){
+   currentUser=e; save(); nav(); dashboard();
+ } else alert("Invalid credentials");
+}
+
+function register(){
+ document.getElementById("app").innerHTML = `
+ <div class="card">
+ <h2>Register</h2>
+ <input id="email" placeholder="Email">
+ <input id="pass" type="password" placeholder="Password">
+ <button onclick="doRegister()">Register</button>
+ </div>`;
+}
+
+function doRegister(){
+ let e=email.value,p=pass.value;
+ if(users[e]) return alert("User exists");
+ users[e]={pass:p,points:0,done:[]};
+ save(); login();
+}
+
+function logout(){
+ currentUser=null; save(); nav(); login();
+}
+
+/* ================= DASHBOARD ================= */
+function dashboard(){
+ let u=users[currentUser];
+ let total=PATHS.length+CHALLENGES.length;
+ let prog=Math.round((u.done.length/total)*100);
+ document.getElementById("app").innerHTML=`
+ <div class="card">
+ <h2>Welcome ${currentUser}</h2>
+ <p>Progress: ${prog}%</p>
+ <div class="progress"><span style="width:${prog}%"></span></div>
+ </div>
+
+ <div class="card">
+ <h3>Learning Paths</h3>
+ <div class="grid">
+ ${PATHS.map(p=>`
+ <div class="card">
+ <b>${p.name}</b><br>
+ <span class="badge">${p.diff}</span>
+ <p>${p.desc}</p>
+ <button onclick="complete('${p.name}',${p.points})">Complete</button>
+ </div>`).join("")}
+ </div>
+ </div>
+
+ <div class="card">
+ <h3>Challenges</h3>
+ <div class="grid">
+ ${CHALLENGES.map(c=>`
+ <div class="card">
+ <b>${c.name}</b><br>
+ <button onclick="challenge('${c.id}')">Open</button>
+ </div>`).join("")}
+ </div>
+ </div>`;
+}
+
+/* ================= COMPLETE ================= */
+function complete(name,pts){
+ let u=users[currentUser];
+ if(!u.done.includes(name)){
+  u.done.push(name); u.points+=pts; save();
+ }
+ dashboard();
+}
+
+/* ================= CHALLENGES ================= */
+function challenge(id){
+ if(id==="box2") sqli();
+ else if(id==="box4") xss();
+ else alert("Simulated VM launched");
+}
+
+/* ===== SQLi DEMO ===== */
+function sqli(){
+ document.getElementById("app").innerHTML=`
+ <div class="card">
+ <h2>SQL Injection Demo</h2>
+ <div class="warning">
+ Educational only. Try: <code>' OR '1'='1</code>
+ </div>
+ <input id="u" placeholder="Username">
+ <input id="p" placeholder="Password">
+ <button onclick="sqliCheck()">Login</button>
+ <div id="res"></div>
+ </div>`;
+}
+
+function sqliCheck(){
+ if(u.value.includes("' OR '1'='1")){
+  complete("SQLi Challenge",50);
+  res.innerHTML="<b style='color:lightgreen'>FLAG{SQLI_SUCCESS}</b>";
+ } else res.innerHTML="Login failed";
+}
+
+/* ===== XSS DEMO ===== */
+function xss(){
+ document.getElementById("app").innerHTML=`
+ <div class="card">
+ <h2>Reflected XSS Demo</h2>
+ <div class="warning">Payload executes directly</div>
+ <input id="x">
+ <button onclick="preview()">Preview</button>
+ <div id="out"></div>
+ </div>`;
+}
+
+function preview(){
+ out.innerHTML="You searched: "+x.value;
+ if(x.value.includes("<script>")){
+   complete("Reflected XSS Challenge",40);
+ }
+}
+
+/* ================= LEADERBOARD ================= */
+function leaderboard(){
+ let board=Object.entries(users)
+ .map(([u,d])=>({u,pts:d.points}))
+ .sort((a,b)=>b.pts-a.pts);
+ document.getElementById("app").innerHTML=`
+ <div class="card">
+ <h2>Leaderboard</h2>
+ <table>
+ <tr><th>Rank</th><th>User</th><th>Points</th></tr>
+ ${board.map((b,i)=>`<tr><td>${i+1}</td><td>${b.u}</td><td>${b.pts}</td></tr>`).join("")}
+ </table>
+ </div>`;
+}
+
+/* ================= INIT ================= */
+nav();
+currentUser?dashboard():login();
+</script>
+
+</body>
+</html>
